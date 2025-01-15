@@ -5,9 +5,14 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.chromium.ChromiumDriver;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.testng.annotations.Test;
+import org.zaproxy.clientapi.core.ApiResponse;
 import org.zaproxy.clientapi.core.ClientApi;
+import org.zaproxy.clientapi.core.ClientApiException;
 
 
 public class ZapSecurityTest {
@@ -34,5 +39,26 @@ public class ZapSecurityTest {
 
     }
 
+    @Test
+    public void owaspsecurityTest(){
+        driver.get("https://aceglobalautomation.com/");
+       // Assert.assertTrue(driver.getTitle().contains("Juice"));
+    }
 
+    @AfterMethod
+    public void teardown(){
+        if (api != null){
+            String title = "Owasp juice portal Security Report - Title";
+            String template = "traditional-html";
+            String description = "Owasp juice portal Security Report - Description ";
+            String reportfilename = "owaspsecurity-report.html";
+            String targetFolder = System.getProperty("user.dir");
+
+            try {
+                ApiResponse response = api.reports.generate(title,template, null, description, null, null, null, null, null, reportfilename, null, targetFolder, null);
+            } catch (ClientApiException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 }
