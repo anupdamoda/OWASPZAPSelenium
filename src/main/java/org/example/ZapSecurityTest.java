@@ -41,8 +41,8 @@ public class ZapSecurityTest {
 
     @Test
     public void owaspsecurityTest(){
-        driver.get("https://aceglobalautomation.com/");
-       // Assert.assertTrue(driver.getTitle().contains("Juice"));
+        driver.get("https://juice-shop.herokuapp.com/#/");
+        Assert.assertTrue(driver.getTitle().contains("Juice"));
     }
 
     @AfterMethod
