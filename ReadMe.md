@@ -14,7 +14,7 @@
 
 
 ## Introduction
-This is a demo testcase on java tech with appium tests.
+This is a sample test script on how to use selenium tool as web scraping tool and using zap tool for doing the penetration testing and getting a report on vulnerabilities of the web application
 
 
 ## Features

@@ -10,9 +10,9 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.testng.annotations.Test;
-import org.zaproxy.clientapi.core.ApiResponse;
-import org.zaproxy.clientapi.core.ClientApi;
-import org.zaproxy.clientapi.core.ClientApiException;
+import org.zaproxy.clientapi.core.*;
+
+import java.util.List;
 
 
 public class ZapSecurityTest {
@@ -24,7 +24,7 @@ public class ZapSecurityTest {
     private ClientApi api;
 
     @BeforeMethod
-    public void setup(){
+    public void setup() throws ClientApiException {
      String proxy_Server_URL = ZAP_PROXY_ADDRESS + ":" + ZAP_PROXY_PORT;
 
         Proxy proxy = new Proxy();
@@ -37,12 +37,57 @@ public class ZapSecurityTest {
         driver = new ChromeDriver(co);
         api = new ClientApi(ZAP_PROXY_ADDRESS, ZAP_PROXY_PORT, ZAP_API_KEY);
 
+        // Fetch all alerts
+        System.out.println("Fetching alerts...");
+        ApiResponse alertsResponse = api.alert.alerts(null, null, null, null, null);
+
+        // Parse alerts and check for medium alerts
+        boolean mediumAlertFound = analyzeAlerts(alertsResponse);
+        if (mediumAlertFound) {
+            System.out.println("Test failed: Medium alert(s) found.");
+        } else {
+            System.out.println("Test passed: No medium alerts.");
+        }
+
+    }
+
+    private static boolean analyzeAlerts(ApiResponse alertsResponse) {
+        boolean mediumAlertFound = false;
+        if (alertsResponse instanceof ApiResponseList) {
+            ApiResponseList alertList = (ApiResponseList) alertsResponse;
+            List<ApiResponse> alerts = alertList.getItems(); // Retrieve all alerts
+
+            for (ApiResponse alert : alerts) {
+                if (alert instanceof ApiResponseList) {
+                    ApiResponseList alertDetails = (ApiResponseList) alert;
+
+                    // Retrieve the 'risk' attribute
+                    String risk = null;
+                    for (ApiResponse detail : alertDetails.getItems()) {
+                        if (detail instanceof ApiResponseElement) {
+                            ApiResponseElement element = (ApiResponseElement) detail;
+                            if ("risk".equalsIgnoreCase(element.getName())) {
+                                risk = element.getValue();
+                                break;
+                            }
+                        }
+                    }
+
+                    if ("Medium".equalsIgnoreCase(risk)) {
+                        mediumAlertFound = true;
+                        break;
+                    }
+                }
+            }
+        }
+        return mediumAlertFound;
     }
 
     @Test
     public void owaspsecurityTest(){
-        driver.get("https://juice-shop.herokuapp.com/#/");
+        driver.get("https://juice-shop.herokuapp.com/#/administrator");
         Assert.assertTrue(driver.getTitle().contains("Juice"));
+
     }
 
     @AfterMethod
@@ -56,9 +101,12 @@ public class ZapSecurityTest {
 
             try {
                 ApiResponse response = api.reports.generate(title,template, null, description, null, null, null, null, null, reportfilename, null, targetFolder, null);
+
             } catch (ClientApiException e) {
                 throw new RuntimeException(e);
             }
+
+
         }
     }
 }
